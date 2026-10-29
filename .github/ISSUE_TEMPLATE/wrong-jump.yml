@@ -1,0 +1,30 @@
+name: Wrong or missing jump
+description: Cmd/Ctrl+click went to the wrong place, or nowhere.
+labels: [resolver]
+body:
+  - type: input
+    id: pr
+    attributes:
+      label: Pull request URL
+      description: A public PR if you can; otherwise describe the code below.
+    validations:
+      required: true
+  - type: input
+    id: symbol
+    attributes:
+      label: Symbol you clicked, and the file it was in
+    validations:
+      required: true
+  - type: input
+    id: expected
+    attributes:
+      label: Where it should have gone
+  - type: input
+    id: actual
+    attributes:
+      label: Where it went (or the toast message)
+  - type: dropdown
+    id: token
+    attributes:
+      label: Token configured?
+      options: ["Yes", "No"]

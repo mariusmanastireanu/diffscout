@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>DiffScout options</title>
+  <style>
+    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 16px; min-width: 420px; }
+    input { width: 100%; box-sizing: border-box; padding: 6px; font-family: ui-monospace, monospace; }
+    button { margin-top: 8px; margin-right: 6px; }
+    #status { margin-top: 8px; color: #57606a; }
+  </style>
+</head>
+<body>
+  <label for="token"><strong>GitHub token</strong></label>
+  <p>Needed for private repos and to avoid the 60 requests/hour limit. Use a fine-grained token with read-only <em>Contents</em> and <em>Pull requests</em> access, and authorize it for SSO if your org requires it. Stored only in this browser.</p>
+  <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
+  <button id="save">Save</button><button id="test">Test</button><button id="clear">Remove</button>
+  <div id="status"></div>
+  <script src="options.js"></script>
+</body>
+</html>

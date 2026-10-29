@@ -1,0 +1,14 @@
+{
+  "name": "diffscout",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension: Cmd/Ctrl+click a symbol in a GitHub pull request diff to jump to its definition.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/resolver.test.js",
+    "test:e2e": "node test/e2e.mjs",
+    "icons": "node scripts/make-icons.mjs",
+    "package": "node scripts/package.mjs"
+  },
+  "engines": { "node": ">=22" }
+}
