@@ -1,4 +1,4 @@
-// Draws icons/icon{16,32,48,128}.png: a blue rounded square with a white arrow jumping over a line.
+// Draws icons/icon{16,32,48,128}.png and store/store-icon128.png: a blue rounded square with a white arrow jumping over a line.
 // Dependency-free (zlib PNG encoder, 4x4 supersampling). Usage: node scripts/make-icons.mjs
 import fs from 'node:fs';
 import zlib from 'node:zlib';
@@ -25,7 +25,9 @@ function shade(x, y) {
   return 'bg';
 }
 
-function png(size) {
+// `pad` leaves a transparent margin, as the Chrome Web Store asks for (96px artwork in a 128px store icon).
+function png(size, pad = 0) {
+  const inner = size - 2 * pad;
   const S = 4;
   const raw = Buffer.alloc(size * (size * 4 + 1));
   for (let py = 0; py < size; py++) {
@@ -33,7 +35,8 @@ function png(size) {
     for (let px = 0; px < size; px++) {
       let fg = 0, bg = 0;
       for (let sy = 0; sy < S; sy++) for (let sx = 0; sx < S; sx++) {
-        const s = shade((px + (sx + 0.5) / S) / size, (py + (sy + 0.5) / S) / size);
+        const ux = (px - pad + (sx + 0.5) / S) / inner, uy = (py - pad + (sy + 0.5) / S) / inner;
+        const s = ux < 0 || ux > 1 || uy < 0 || uy > 1 ? null : shade(ux, uy);
         if (s === 'fg') fg++; else if (s === 'bg') bg++;
       }
       const a = fg + bg;
@@ -59,3 +62,5 @@ function png(size) {
 
 fs.mkdirSync(out, { recursive: true });
 for (const size of [16, 32, 48, 128]) fs.writeFileSync(`${out}icon${size}.png`, png(size));
+fs.mkdirSync(`${out}../store/`, { recursive: true });
+fs.writeFileSync(`${out}../store/store-icon128.png`, png(128, 16));

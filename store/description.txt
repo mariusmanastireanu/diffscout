@@ -1,0 +1,23 @@
+Go to definition for GitHub pull requests.
+
+Reviewing a PR and wondering what a class or method does? Hold Cmd (Ctrl on Windows/Linux) and click it, like in your IDE.
+
+• If the definition is in the PR's diff, the page scrolls straight to it. Browser Back takes you back.
+• If it's elsewhere in the repo, the file opens in a new tab at the right line, at the PR's head commit.
+• If it can't be found (e.g. a library symbol), GitHub's symbol search opens for the repo.
+
+Holding Cmd/Ctrl underlines the symbol under your cursor, so you can see what is clickable.
+
+WORKS WITH ANY LANGUAGE
+No per-language setup. DiffScout recognises the common shapes of definitions (classes, interfaces, structs, functions, methods, constants) and follows imports, so it works with Java, Kotlin, Python, TypeScript, JavaScript and React, Rust, Go, C#, Ruby, PHP and more. For calls like petValidator.validate(), it uses the receiver's type to pick the right file.
+
+It is a fast heuristic, not a full language server: overloads and dynamic dispatch can occasionally land on the wrong candidate.
+
+GITHUB TOKEN (OPTIONAL)
+Public repos work out of the box. For private repos and higher rate limits, add a GitHub token in the extension's options. A fine-grained token with read-only Contents and Pull requests access is enough.
+
+PRIVACY
+No servers, no analytics, no tracking. DiffScout talks only to GitHub. Your token stays in your browser and is sent only to api.github.com.
+
+Open source (MIT): https://github.com/mariusmanastireanu/diffscout
+Found a wrong jump? Open an issue with the PR link.

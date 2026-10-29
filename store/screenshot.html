@@ -1,0 +1,80 @@
+<!doctype html>
+<!-- Source for store/screenshot-1280x800.png. Render with: npm run screenshot -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 1280px; height: 800px; overflow: hidden; font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif; color: #1f2328;
+         background: linear-gradient(135deg, #eaf2ff 0%, #f6f8fa 60%); display: flex; align-items: center; padding: 0 64px; gap: 56px; }
+  .pitch { width: 380px; flex: none; }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 22px; margin-bottom: 28px; }
+  .brand img { width: 44px; height: 44px; }
+  h1 { font-size: 40px; line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 20px; }
+  h1 em { font-style: normal; color: #0969da; }
+  ul { padding: 0; list-style: none; }
+  li { padding-left: 28px; position: relative; margin-bottom: 12px; color: #424a53; font-size: 17px; }
+  li::before { content: ""; position: absolute; left: 4px; top: 9px; width: 10px; height: 10px; border-radius: 50%; background: #0969da; }
+  .stage { flex: 1; position: relative; height: 620px; }
+  .card { position: absolute; background: #fff; border: 1px solid #d0d7de; border-radius: 10px; box-shadow: 0 12px 32px rgba(31, 35, 40, 0.12); overflow: hidden; }
+  .head { padding: 10px 14px; background: #f6f8fa; border-bottom: 1px solid #d0d7de; font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; color: #424a53; }
+  .code { font: 14px/24px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 6px 0; }
+  .row { white-space: pre; padding-right: 14px; }
+  .ln { display: inline-block; width: 48px; margin-right: 10px; text-align: right; padding-right: 10px; color: #8c959f; }
+  .add { background: #dafbe1; } .add .ln { background: #ccffd8; }
+  .del { background: #ffebe9; } .del .ln { background: #ffd7d5; }
+  .hl { background: #fff8c5; } .hl .ln { background: #fae17d; color: #1f2328; }
+  .k { color: #cf222e; } .t { color: #953800; } .s { color: #0a3069; } .f { color: #8250df; } .c { color: #6e7781; }
+  .link { color: #0969da; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+  .diff { left: 0; top: 30px; width: 620px; }
+  .def { left: 90px; top: 350px; width: 620px; }
+  .badge { position: absolute; left: 330px; top: 246px; background: #1f2328; color: #fff; font: 600 13px -apple-system, sans-serif; padding: 5px 10px; border-radius: 6px; }
+  .badge kbd { font: inherit; background: #424a53; padding: 1px 6px; border-radius: 4px; margin-right: 4px; }
+  svg.arrow { position: absolute; left: 0; top: 0; overflow: visible; }
+</style>
+</head>
+<body>
+  <div class="pitch">
+    <div class="brand"><img src="store-icon128.png" alt="">DiffScout</div>
+    <h1>Go to definition in <em>pull request diffs</em></h1>
+    <ul>
+      <li>Cmd/Ctrl+click any class, method or constant</li>
+      <li>Scrolls to it when it's in the diff, otherwise opens the file at the right line</li>
+      <li>Java, Python, TypeScript, React, Rust, Go and more, with no setup per language</li>
+    </ul>
+  </div>
+  <div class="stage">
+    <div class="card diff">
+      <div class="head">src/test/java/…/owner/PetValidatorTests.java</div>
+      <div class="code">
+<div class="row"><span class="ln">48</span>    <span class="t">Pet</span> pet = <span class="k">new</span> <span class="t">Pet</span>();</div>
+<div class="row"><span class="ln">49</span>    pet.setName(<span class="s">"Leo"</span>);</div>
+<div class="row del"><span class="ln">50</span>-   pet.setBirthDate(<span class="k">null</span>);</div>
+<div class="row add"><span class="ln">50</span>+   pet.setBirthDate(<span class="t">LocalDate</span>.now());</div>
+<div class="row add"><span class="ln">51</span>+   <span class="t">Errors</span> errors = <span class="k">new</span> <span class="t">MapBindingResult</span>(...);</div>
+<div class="row add"><span class="ln">52</span>+   petValidator.<span class="link f">validate</span>(pet, errors);</div>
+<div class="row"><span class="ln">53</span>    assertFalse(errors.hasErrors());</div>
+<div class="row"><span class="ln">54</span>  }</div>
+      </div>
+    </div>
+    <div class="badge"><kbd>⌘</kbd> click</div>
+    <svg class="arrow" width="1" height="1">
+      <defs><marker id="h" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0969da"/></marker></defs>
+      <path d="M 300 228 C 250 270, 250 310, 300 346" fill="none" stroke="#0969da" stroke-width="3" marker-end="url(#h)"/>
+    </svg>
+    <div class="card def">
+      <div class="head">src/main/java/…/owner/PetValidator.java · opened at line 39</div>
+      <div class="code">
+<div class="row"><span class="ln">36</span><span class="k">public class</span> <span class="t">PetValidator</span> <span class="k">implements</span> <span class="t">Validator</span> {</div>
+<div class="row"><span class="ln">37</span></div>
+<div class="row"><span class="ln">38</span>  <span class="c">@Override</span></div>
+<div class="row hl"><span class="ln">39</span>  <span class="k">public void</span> <span class="f">validate</span>(<span class="t">Object</span> obj, <span class="t">Errors</span> errors) {</div>
+<div class="row"><span class="ln">40</span>    <span class="t">Pet</span> pet = (<span class="t">Pet</span>) obj;</div>
+<div class="row"><span class="ln">41</span>    <span class="t">String</span> name = pet.getName();</div>
+<div class="row"><span class="ln">42</span>    <span class="k">if</span> (!<span class="t">StringUtils</span>.hasText(name)) {</div>
+<div class="row"><span class="ln">43</span>      errors.rejectValue(<span class="s">"name"</span>, <span class="s">"required"</span>);</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

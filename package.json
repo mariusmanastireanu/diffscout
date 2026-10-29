@@ -8,7 +8,8 @@
     "test": "node --test test/resolver.test.js",
     "test:e2e": "node test/e2e.mjs",
     "icons": "node scripts/make-icons.mjs",
-    "package": "node scripts/package.mjs"
+    "package": "node scripts/package.mjs",
+    "screenshot": "\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1280,800 --screenshot=\"$PWD/store/screenshot-1280x800.png\" \"file://$PWD/store/screenshot.html\""
   },
   "engines": {
     "node": ">=22"
