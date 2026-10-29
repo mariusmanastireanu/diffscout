@@ -1,6 +1,6 @@
 {
   "name": "diffscout",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Chrome extension: Cmd/Ctrl+click a symbol in a GitHub pull request diff to jump to its definition.",
   "license": "MIT",

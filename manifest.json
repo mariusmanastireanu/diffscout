@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DiffScout for GitHub",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cmd/Ctrl+click a symbol in a GitHub pull request diff to jump to its definition, in any language.",
   "homepage_url": "https://github.com/mariusmanastireanu/diffscout",
   "icons": {
