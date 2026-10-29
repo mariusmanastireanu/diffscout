@@ -4,17 +4,39 @@
   "version": "0.1.0",
   "description": "Cmd/Ctrl+click a symbol in a GitHub pull request diff to jump to its definition, in any language.",
   "homepage_url": "https://github.com/mariusmanastireanu/diffscout",
-  "icons": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
-  "permissions": ["storage"],
-  "host_permissions": ["https://api.github.com/*", "https://raw.githubusercontent.com/*"],
-  "background": { "service_worker": "src/background.js" },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://api.github.com/*",
+    "https://raw.githubusercontent.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
   "content_scripts": [
     {
-      "matches": ["https://github.com/*"],
-      "js": ["src/resolver.js", "src/content.js"],
-      "css": ["src/content.css"],
+      "matches": [
+        "https://github.com/*"
+      ],
+      "js": [
+        "src/resolver.js",
+        "src/content.js"
+      ],
+      "css": [
+        "src/content.css"
+      ],
       "run_at": "document_idle"
     }
   ],
-  "options_ui": { "page": "options.html", "open_in_tab": false }
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  }
 }

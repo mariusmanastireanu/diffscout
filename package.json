@@ -10,5 +10,7 @@
     "icons": "node scripts/make-icons.mjs",
     "package": "node scripts/package.mjs"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  }
 }

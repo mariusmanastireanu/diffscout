@@ -24,3 +24,7 @@ GITHUB_TOKEN=$(gh auth token) npm run test:e2e
 ```
 
 A resolver fix should come with a case in `test/resolver.test.js`, and ideally a live PR case in `test/e2e.mjs`. No runtime dependencies, please: the extension ships as plain files.
+
+## Releasing
+
+Run the **Release** workflow from the Actions tab and pick `patch`, `minor` or `major`. It bumps the version in `manifest.json` and `package.json`, commits and tags on `main`, and publishes a GitHub Release with the extension zip. Upload that zip to the Chrome Web Store.
