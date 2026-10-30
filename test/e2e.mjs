@@ -50,7 +50,7 @@ async function runCase([pr, file, srcLine, word, wantPath, wantLine, wantMode, n
     document: {
       addEventListener: (t, fn) => { listeners[t] = fn; },
       documentElement: { appendChild() {}, classList: { add() {}, remove() {} } },
-      createElement: () => ({ classList: { add() {}, remove() {} } }),
+      createElement: () => ({ classList: { add() {}, remove() {}, toggle() {} }, appendChild() {} }),
       caretPositionFromPoint: () => ({ offsetNode: textNode, offset: at + 1 }),
       createRange: () => { let end = 0; return { setStart() {}, setEnd(_n, o) { end = o; }, toString: () => srcLine.slice(0, end), getClientRects: () => [{ left: 0, right: 100, top: 0, bottom: 20 }] }; },
       getElementById: (id) => fakeEl(id),

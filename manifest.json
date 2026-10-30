@@ -15,7 +15,8 @@
   ],
   "host_permissions": [
     "https://api.github.com/*",
-    "https://raw.githubusercontent.com/*"
+    "https://raw.githubusercontent.com/*",
+    "https://github.com/login/*"
   ],
   "background": {
     "service_worker": "src/background.js"
@@ -37,6 +38,6 @@
   ],
   "options_ui": {
     "page": "options.html",
-    "open_in_tab": false
+    "open_in_tab": true
   }
 }

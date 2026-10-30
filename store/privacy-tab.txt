@@ -1,0 +1,23 @@
+Chrome Web Store → Privacy tab answers. Keep in sync with manifest.json permissions.
+
+SINGLE PURPOSE
+Go to definition for symbols in GitHub pull request diffs.
+
+STORAGE JUSTIFICATION
+Stores the user's GitHub sign-in (an OAuth token from "Sign in with GitHub", or a personal access token they paste) and their GitHub username locally in chrome.storage.local, so the extension can read private repositories and avoid GitHub's anonymous rate limit. Nothing else is stored, and the token is never synced or sent anywhere except api.github.com.
+
+HOST PERMISSION JUSTIFICATION
+https://api.github.com/* — When the user Cmd/Ctrl+clicks a symbol on a GitHub pull request page, the extension reads that pull request's metadata, changed files and repository file contents through the GitHub REST API to find where the symbol is defined.
+https://raw.githubusercontent.com/* — Used to fetch the raw contents of public repository files when the user is not signed in, to stay within GitHub's anonymous API rate limit.
+https://github.com/login/* — Used only for "Sign in with GitHub": the extension requests a one-time sign-in code and then exchanges it for a token once the user approves the app on GitHub (OAuth device flow).
+The content script runs on https://github.com/* only, to detect Cmd/Ctrl+clicks in pull request diffs and scroll to or open the definition.
+
+REMOTE CODE
+No, I am not using remote code.
+
+DATA USAGE
+Collected: Authentication information (the GitHub token, stored only in the user's browser).
+Certify all three: not sold to third parties; not used for purposes unrelated to the single purpose; not used to determine creditworthiness or for lending.
+
+PRIVACY POLICY URL
+https://github.com/mariusmanastireanu/diffscout/blob/main/PRIVACY.md

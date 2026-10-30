@@ -4,18 +4,52 @@
   <meta charset="utf-8">
   <title>DiffScout options</title>
   <style>
-    body { font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 16px; min-width: 420px; }
-    input { width: 100%; box-sizing: border-box; padding: 6px; font-family: ui-monospace, monospace; }
-    button { margin-top: 8px; margin-right: 6px; }
-    #status { margin-top: 8px; color: #57606a; }
+    body { font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1f2328; max-width: 560px; margin: 40px auto; padding: 0 16px; }
+    h1 { display: flex; align-items: center; gap: 10px; font-size: 20px; margin: 0 0 20px; }
+    h1 img { width: 32px; height: 32px; }
+    .card { border: 1px solid #d0d7de; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+    .muted { color: #57606a; }
+    button { font: inherit; padding: 5px 14px; border-radius: 6px; border: 1px solid #d0d7de; background: #f6f8fa; cursor: pointer; margin-right: 6px; }
+    button.primary { background: #1f883d; border-color: #1a7f37; color: #fff; font-weight: 600; }
+    button:disabled { opacity: 0.6; cursor: default; }
+    .code { font: 600 28px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 3px; margin: 8px 0 14px; }
+    input { width: 100%; box-sizing: border-box; padding: 6px 8px; font-family: ui-monospace, monospace; margin: 8px 0; }
+    summary { cursor: pointer; font-weight: 600; }
+    #status { min-height: 1.5em; }
+    #status.error { color: #cf222e; }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
-  <label for="token"><strong>GitHub token</strong></label>
-  <p>Needed for private repos and to avoid the 60 requests/hour limit. Use a fine-grained token with read-only <em>Contents</em> and <em>Pull requests</em> access, and authorize it for SSO if your org requires it. Stored only in this browser.</p>
-  <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
-  <button id="save">Save</button><button id="test">Test</button><button id="clear">Remove</button>
+  <h1><img src="icons/icon48.png" alt="">DiffScout</h1>
+
+  <div class="card" id="signedOut" hidden>
+    <p>Sign in so DiffScout can read your private repositories and use GitHub's higher rate limits. Public repositories work without signing in.</p>
+    <button id="signIn" class="primary">Sign in with GitHub</button>
+  </div>
+
+  <div class="card" id="pending" hidden>
+    <p>Your sign-in code:</p>
+    <div class="code" id="code"></div>
+    <p>Click the button to copy it and open GitHub, paste the code there and click <strong>Authorize</strong>. This page updates by itself when you're done.</p>
+    <button id="copyOpen" class="primary">Copy code and open GitHub</button><button id="cancel">Cancel</button>
+  </div>
+
+  <div class="card" id="signedIn" hidden>
+    <p>Signed in as <strong id="login"></strong> <span class="muted" id="method"></span></p>
+    <button id="test">Test</button><button id="signOut">Sign out</button>
+    <p class="muted" id="revoke" hidden>Signing out removes the token from this browser. To revoke it on GitHub as well, open <a href="#" id="appSettings">DiffScout in your GitHub settings</a>.</p>
+  </div>
+
   <div id="status"></div>
+
+  <details class="card" id="advanced">
+    <summary>Use a personal access token instead</summary>
+    <p class="muted">For accounts where signing in isn't possible. Use a fine-grained token with read-only <em>Contents</em> and <em>Pull requests</em> access, or a classic token with the <code>repo</code> scope. Stored only in this browser.</p>
+    <input id="token" type="password" autocomplete="off" placeholder="github_pat_… or ghp_…">
+    <button id="save">Save token</button>
+  </details>
+
   <script src="options.js"></script>
 </body>
 </html>

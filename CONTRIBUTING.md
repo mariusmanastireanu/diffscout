@@ -11,7 +11,8 @@ Code layout:
 
 - `src/resolver.js`: pure, language-agnostic heuristics (definition patterns, import hints, path ranking). Most fixes go here.
 - `src/content.js`: click handling, GitHub API calls through the background worker, scrolling and navigation.
-- `src/background.js`: the only place that talks to the network.
+- `src/background.js`: the only place that talks to the network. Also runs "Sign in with GitHub" (OAuth device flow).
+- `options.html` / `options.js`: sign in, sign out, or paste a personal access token.
 
 ## Tests
 
@@ -23,7 +24,7 @@ npm test
 GITHUB_TOKEN=$(gh auth token) npm run test:e2e
 ```
 
-A resolver fix should come with a case in `test/resolver.test.js`, and ideally a live PR case in `test/e2e.mjs`. No runtime dependencies, please: the extension ships as plain files.
+`npm test` covers the resolver (`test/resolver.test.js`), sign-in and API error handling (`test/auth.test.js`), and the messages shown on the page (`test/content.test.js`). A resolver fix should come with a case in `test/resolver.test.js`, and ideally a live PR case in `test/e2e.mjs`. No runtime dependencies, please: the extension ships as plain files.
 
 ## Releasing
 

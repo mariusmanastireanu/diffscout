@@ -20,15 +20,16 @@ From a release:
 
 From source: clone the repo and load the folder the same way.
 
-### GitHub token (recommended)
+### Sign in (recommended)
 
-Open the extension's **Details → Extension options**, paste a token, then click **Save** and **Test**.
+The options page opens when you install DiffScout. Click **Sign in with GitHub**, enter the code it shows on the GitHub page that opens, and click **Authorize**. You can open the page again from `chrome://extensions` → DiffScout → **Details → Extension options**.
 
-- Fine-grained token: read-only **Contents** and **Pull requests** on the repos you review. Some orgs require an admin to approve it.
-- Classic token: the `repo` scope. It needs no approval, but it also grants write access.
-- If your org uses SAML SSO, authorize the token for the org.
+- Signing in lets DiffScout read private repositories and raises GitHub's rate limit. Public repositories work without it, but code search (step 7 below) is skipped.
+- GitHub only offers full `repo` access to apps that read private code, so the sign-in asks for that. DiffScout only reads.
+- If your organization restricts third-party apps, request approval when you authorize, or ask an org owner. If it uses SAML single sign-on, authorize DiffScout for it; DiffScout shows a button for this when it's needed.
+- **Prefer a token?** Expand **Use a personal access token instead** in the options and paste a fine-grained token with read-only *Contents* and *Pull requests* access.
 
-Without a token, only public repos work, you are limited to GitHub's anonymous rate limit, and code search (step 7 below) is skipped. The token stays in your browser; see [PRIVACY.md](PRIVACY.md).
+The token stays in your browser; see [PRIVACY.md](PRIVACY.md).
 
 ## How it works (language-agnostic)
 
@@ -40,7 +41,7 @@ No per-language plugins: the extension reads the PR through the GitHub API and u
 4. The module the clicked file imports the symbol from: Java/Kotlin packages, Python absolute and relative imports, JS/TS relative and aliased paths, Rust `use`.
 5. Other files the PR touches, including the parts outside the hunks.
 6. A file named after the symbol (`Invoice.java`, `invoice.py`, `Invoice/index.tsx`, `invoice.rs`), preferring the same language family.
-7. GitHub code search (token required), then the GitHub symbol-search page.
+7. GitHub code search (sign-in required), then the GitHub symbol-search page.
 
 It is a heuristic, not a language server: overloads and dynamic dispatch can land on the wrong candidate, and only github.com is supported (not GitHub Enterprise Server).
 

@@ -13,11 +13,11 @@ No per-language setup. DiffScout recognises the common shapes of definitions (cl
 
 It is a fast heuristic, not a full language server: overloads and dynamic dispatch can occasionally land on the wrong candidate.
 
-GITHUB TOKEN (OPTIONAL)
-Public repos work out of the box. For private repos and higher rate limits, add a GitHub token in the extension's options. A fine-grained token with read-only Contents and Pull requests access is enough.
+PRIVATE REPOS
+Public repos work out of the box. For private repos and higher rate limits, click Sign in with GitHub in the extension's options and approve DiffScout on GitHub. You can also paste a personal access token instead.
 
 PRIVACY
-No servers, no analytics, no tracking. DiffScout talks only to GitHub. Your token stays in your browser and is sent only to api.github.com.
+No servers, no analytics, no tracking. DiffScout talks only to GitHub. Your GitHub sign-in stays in your browser and is sent only to api.github.com.
 
 Open source (MIT): https://github.com/mariusmanastireanu/diffscout
 Found a wrong jump? Open an issue with the PR link.

@@ -126,16 +126,38 @@
   }
 
   let toastEl, toastTimer;
-  function toast(msg, ms = 2500) {
+  // `action` adds a button to the toast, e.g. { label: 'Sign in', run: () => ... }.
+  function toast(msg, ms = 2500, action = null) {
     if (!toastEl) {
       toastEl = document.createElement('div');
       toastEl.className = 'diffscout-toast';
       document.documentElement.appendChild(toastEl);
     }
     toastEl.textContent = msg;
+    toastEl.classList.toggle('diffscout-actionable', !!action);
+    if (action) {
+      const btn = document.createElement('button');
+      btn.textContent = action.label;
+      btn.onclick = () => { toastEl.classList.remove('diffscout-show'); action.run(); };
+      toastEl.appendChild(btn);
+    }
     toastEl.classList.add('diffscout-show');
     clearTimeout(toastTimer);
     if (ms) toastTimer = setTimeout(() => toastEl.classList.remove('diffscout-show'), ms);
+  }
+
+  // Explain an API failure, with a button that fixes it where possible.
+  function explainFailure(r) {
+    const openOptions = () => chrome.runtime.sendMessage({ type: 'openOptions' });
+    if (r.authFailed) return toast('Your GitHub sign-in has expired or was revoked.', 8000, { label: 'Sign in again', run: openOptions });
+    if (r.ssoUrl) return toast('This organization uses single sign-on. Authorize DiffScout for it, then try again.', 8000, { label: 'Authorize', run: () => chrome.runtime.sendMessage({ type: 'openTab', url: r.ssoUrl }) });
+    if (r.restrictedOrg) return toast(`${r.restrictedOrg} restricts third-party apps. Request approval for DiffScout, or ask an org owner.`, 10000, { label: 'Request access', run: () => chrome.runtime.sendMessage({ type: 'openAppSettings' }) });
+    if (r.rateLimited) return r.hasToken
+      ? toast('GitHub rate limit reached. Try again in a few minutes.', 5000)
+      : toast('GitHub rate limit reached. Sign in to get a much higher limit.', 8000, { label: 'Sign in', run: openOptions });
+    if (!r.hasToken && (r.status === 404 || r.status === 403)) return toast('This looks like a private repository. Sign in with GitHub so DiffScout can read it.', 8000, { label: 'Sign in', run: openOptions });
+    if (r.status === 404) return toast("Your GitHub account can't read this repository from DiffScout. Its organization may need to approve the app.", 8000, { label: 'Settings', run: openOptions });
+    return toast(`DiffScout: GitHub API error ${r.status || r.error}`, 4000);
   }
 
   function flash(el) {
@@ -311,12 +333,8 @@
         toast(`No definition found for ${hit.word}; opened GitHub symbol search`, 3000);
       }
     } catch (err) {
-      const r = err.res;
-      if (r && !r.hasToken && (r.status === 404 || r.status === 403 || r.rateLimited)) {
-        toast('Private repo or rate limit: add a GitHub token in the extension options', 5000);
-      } else {
-        toast(`DiffScout: ${err.message}`, 4000);
-      }
+      if (err.res) explainFailure(err.res);
+      else toast(`DiffScout: ${err.message}`, 4000);
     } finally {
       busy = false;
     }
