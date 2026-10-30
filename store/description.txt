@@ -9,7 +9,7 @@ Reviewing a PR and wondering what a class or method does? Hold Cmd (Ctrl on Wind
 Holding Cmd/Ctrl underlines the symbol under your cursor, so you can see what is clickable.
 
 WORKS WITH ANY LANGUAGE
-No per-language setup. DiffScout recognises the common shapes of definitions (classes, interfaces, structs, functions, methods, constants) and follows imports, so it works with Java, Kotlin, Python, TypeScript, JavaScript and React, Rust, Go, C#, Ruby, PHP and more. For calls like petValidator.validate(), it uses the receiver's type to pick the right file.
+No per-language setup. DiffScout recognises the common shapes of definitions (classes, interfaces, structs, functions, methods, constants) and follows imports, so it works across most popular programming languages. For calls like petValidator.validate(), it uses the receiver's type to pick the right file.
 
 It is a fast heuristic, not a full language server: overloads and dynamic dispatch can occasionally land on the wrong candidate.
 
