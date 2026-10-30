@@ -246,27 +246,46 @@
     return null;
   }
 
+  // The new-side cell for `line` of a PR file. The classic diff view ids it diff-<hash>R<line>; newer views may
+  // only tag cells with data-line-number, so fall back to that inside the file's container, right side first.
+  function findLine(file, line) {
+    const byId = document.getElementById(`diff-${file.hash}R${line}`);
+    if (byId) return byId;
+    const box = fileBox(file);
+    if (!box) return null;
+    const cells = [...box.querySelectorAll(`[data-line-number="${line}"]`)];
+    return cells.find((c) => /R\d+$/.test(c.id) || c.closest('[data-split-side="right"]') || /rnum|right|new/i.test(c.className)) || null;
+  }
+
+  const fileBox = (file) => document.getElementById(`diff-${file.hash}`) ||
+    [...document.querySelectorAll('[data-tagsearch-path], [data-path], [data-file-path]')]
+      .find((n) => [n.dataset.tagsearchPath, n.dataset.path, n.dataset.filePath].includes(file.path)) || null;
+
   async function go(pr, ctx, target) {
     const file = ctx.byPath.get(target.path);
+    const name = target.path.split('/').pop();
     if (file && file.newLines.has(target.line)) {
-      const id = `diff-${file.hash}R${target.line}`;
-      let el = document.getElementById(id);
+      let el = findLine(file, target.line);
       if (!el) {
         // File may be collapsed or not rendered yet; let GitHub load it via its own anchor handling.
         location.hash = `diff-${file.hash}`;
-        el = await waitFor(() => document.getElementById(id), 4000);
+        el = await waitFor(() => findLine(file, target.line), 4000);
       }
       if (el) {
-        history.pushState(null, '', `#${id}`);
+        history.pushState(null, '', `#diff-${file.hash}R${target.line}`);
         el.scrollIntoView({ block: 'center' });
         flash(el);
-        toast(`${target.path.split('/').pop()}:${target.line}`, 1500);
+        toast(`${name}:${target.line}`, 1500);
         return;
       }
+      // The line is in this PR, so stay on the page: we already scrolled to its file.
+      fileBox(file)?.scrollIntoView({ block: 'start' });
+      toast(`${name}:${target.line} is in this file`, 2500);
+      return;
     }
     const url = `https://github.com/${pr.owner}/${pr.repo}/blob/${ctx.headSha}/${encodePath(target.path)}#L${target.line}`;
     chrome.runtime.sendMessage({ type: 'openTab', url });
-    toast(`Opened ${target.path.split('/').pop()}:${target.line} in a new tab`, 2000);
+    toast(`Opened ${name}:${target.line} in a new tab`, 2000);
   }
 
   let busy = false;
