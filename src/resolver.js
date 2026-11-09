@@ -16,8 +16,9 @@
     // Bindings: JS/TS const components, Kotlin/Scala val, Rust let/const/static
     { score: 70, re: (x) => new RegExp(`\\b(const|let|var|val|static)\\s+(mut\\s+)?${x}\\s*[:=]`) },
     { score: 65, re: (x) => new RegExp(`^\\s*(export\\s+)?(default\\s+)?${x}\\s*=\\s*(\\(|async\\b|function\\b|class\\b|React\\.|styled)`) },
-    // Methods in C-family languages: `<modifiers> <ReturnType> name(` on a line that does not end in `;`
-    { score: 55, re: (x) => new RegExp(`^\\s*(@\\w+\\s+)*((public|private|protected|internal|static|final|abstract|override|virtual|async|synchronized|open|suspend|inline|extern|const|unsafe|pub(\\([^)]*\\))?)\\s+)*(<[^>]*>\\s+)?[\\w<>\\[\\],.?:&*]+\\s+[&*]?${x}\\s*(<[^>]*>)?\\s*\\((?!.*;\\s*$)`) },
+    // Methods in C-family languages: `<modifiers> <ReturnType> name(` on a line that does not end in `;`.
+    // The return type may be generic with spaces, e.g. `Map<String, Object>`.
+    { score: 55, re: (x) => new RegExp(`^\\s*(@\\w+\\s+)*((public|private|protected|internal|static|final|abstract|override|virtual|async|synchronized|open|suspend|inline|extern|const|unsafe|pub(\\([^)]*\\))?)\\s+)*(<[^>]*>\\s+)?[\\w.:$]+(\\s*<[^()=;{}]*>)?(\\s*\\[\\])*[?&*]*\\s+[&*]?(\\w+::)*${x}\\s*(<[^>]*>)?\\s*\\((?!.*;\\s*$)`) },
     // JS/TS class or object methods: `name(args) {`
     { score: 50, re: (x) => new RegExp(`^\\s*((async|static|get|set|public|private|protected|override)\\s+)*${x}\\s*\\([^)]*\\)\\s*(:\\s*[^{]+)?\\{`) },
     { score: 45, re: (x) => new RegExp(`^\\s*${x}\\s*:\\s*(async\\s+)?(function\\b|\\()`) },

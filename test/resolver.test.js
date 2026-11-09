@@ -20,6 +20,11 @@ const defs = [
   ['type Server struct {', 'Server'],
   ['    public Optional<Pet> findByName(String name) {', 'findByName'],
   ['    private static <T> List<T> copyOf(Collection<T> c) {', 'copyOf'],
+  ['    static Map<String, Object> fingerprint(Map<String, Object> data, Map<Key, String> extra) {', 'fingerprint'],
+  ['    public Map<String, List<Integer>> groupByOwner(List<Pet> pets) {', 'groupByOwner'],
+  ['    protected Optional<Map<String, Pet>> index() {', 'index'],
+  ['    public String[] names() {', 'names'],
+  ['std::vector<int>& Ledger::entries() {', 'entries'],
   ['  async loadUser(id: string): Promise<User> {', 'loadUser'],
   ['MAX_RETRIES = 3', 'MAX_RETRIES'],
   ['defmodule Billing.Invoice do', 'Billing'],
@@ -38,6 +43,8 @@ const usages = [
   ['    invoice.total()', 'total'],
   ['    this.validator.validate(pet, errors);', 'validate'],
   ['        Pet pet = findByName(name);', 'findByName'],
+  ['        Map<String, Object> fp = fingerprint(data, extra);', 'fingerprint'],
+  ['        Map<String, Object> fingerprint(Map<String, Object> s);', 'fingerprint'],
 ];
 for (const [line, id] of usages) {
   test(`not a definition: ${line}`, () => assert.strictEqual(R.definitionScore(line, id), 0));
