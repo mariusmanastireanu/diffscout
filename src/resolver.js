@@ -4,6 +4,9 @@
 (function (root) {
   const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+  // `<annotations> <modifiers> <ReturnType> name(` in Java, C#, Kotlin, C/C++, Rust...
+  const C_METHOD = (x) => `^\\s*(@\\w+\\s+)*((public|private|protected|internal|static|final|abstract|override|virtual|async|synchronized|open|suspend|inline|extern|const|unsafe|default|pub(\\([^)]*\\))?)\\s+)*(<[^>]*>\\s+)?[\\w.:$]+(\\s*<[^()=;{}]*>)?(\\s*\\[\\])*[?&*]*\\s+[&*]?(\\w+::)*${x}\\s*(<[^>]*>)?\\s*\\(`;
+
   // Each pattern gets the escaped identifier; higher score = more likely the definition.
   const DEFINITION_PATTERNS = [
     // Types: Java, Kotlin, C#, TS, Rust, Swift, Scala, Go, C/C++, PHP, Ruby, Elixir...
@@ -18,7 +21,13 @@
     { score: 65, re: (x) => new RegExp(`^\\s*(export\\s+)?(default\\s+)?${x}\\s*=\\s*(\\(|async\\b|function\\b|class\\b|React\\.|styled)`) },
     // Methods in C-family languages: `<modifiers> <ReturnType> name(` on a line that does not end in `;`.
     // The return type may be generic with spaces, e.g. `Map<String, Object>`.
-    { score: 55, re: (x) => new RegExp(`^\\s*(@\\w+\\s+)*((public|private|protected|internal|static|final|abstract|override|virtual|async|synchronized|open|suspend|inline|extern|const|unsafe|pub(\\([^)]*\\))?)\\s+)*(<[^>]*>\\s+)?[\\w.:$]+(\\s*<[^()=;{}]*>)?(\\s*\\[\\])*[?&*]*\\s+[&*]?(\\w+::)*${x}\\s*(<[^>]*>)?\\s*\\((?!.*;\\s*$)`) },
+    { score: 55, re: (x) => new RegExp(`${C_METHOD(x)}(?!.*;\\s*$)`) },
+    // Bodiless declarations: interface / abstract methods, Spring Data repositories, C prototypes.
+    // Below 55 so an implementation wins when both are visible.
+    { score: 40, re: (x) => new RegExp(`${C_METHOD(x)}[^=]*\\)\\s*(throws\\s+[\\w.,\\s]+)?;\\s*$`) },
+    // Fields: `private final OrderRepository orderRepository;`, `protected static int count = 0;`.
+    // At least one modifier is required, so local statements like `Pet pet = find(x);` don't count.
+    { score: 35, re: (x) => new RegExp(`^\\s*(@\\w+(\\([^)]*\\))?\\s+)*((public|private|protected|internal|static|final|readonly|volatile|transient|lateinit)\\s+)+[\\w.$]+(\\s*<[^;=()]*>)?(\\s*\\[\\])*\\??\\s+${x}\\s*(=|;)`) },
     // JS/TS class or object methods: `name(args) {`
     { score: 50, re: (x) => new RegExp(`^\\s*((async|static|get|set|public|private|protected|override)\\s+)*${x}\\s*\\([^)]*\\)\\s*(:\\s*[^{]+)?\\{`) },
     { score: 45, re: (x) => new RegExp(`^\\s*${x}\\s*:\\s*(async\\s+)?(function\\b|\\()`) },
@@ -180,7 +189,24 @@
     return types;
   }
 
-  const api = { pathsForHints, receiverOf, receiverTypes, definitionScore, findDefinitionInText, parsePatch, importHints, rankCandidatePaths, stem, normalize };
+  // Parent types named in a type declaration, e.g.
+  // `public interface OrderRepository extends JpaRepository<Order, UUID>, Auditable {` -> ['JpaRepository', 'Auditable'].
+  // `text` is the declaration line plus the next few lines; generic arguments are ignored.
+  function superTypes(text) {
+    let s = text.split('{')[0];
+    for (let prev; prev !== s;) { prev = s; s = s.replace(/<[^<>]*>/g, ''); }
+    const out = [];
+    const re = /(?:\b(?:extends|implements)\b|[^:]:(?!:))([^]*?)(?=\b(?:extends|implements|where|permits)\b|$)/g;
+    for (const m of s.matchAll(re)) {
+      for (const part of m[1].split(',')) {
+        const name = /([A-Z][\w$]*)\s*(?:\(.*)?$/.exec(part.trim().split('.').pop());
+        if (name && !out.includes(name[1])) out.push(name[1]);
+      }
+    }
+    return out;
+  }
+
+  const api = { pathsForHints, superTypes, receiverOf, receiverTypes, definitionScore, findDefinitionInText, parsePatch, importHints, rankCandidatePaths, stem, normalize };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.DiffScout = api;
 })(typeof self !== 'undefined' ? self : this);

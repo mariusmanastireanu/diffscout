@@ -28,6 +28,15 @@ const defs = [
   ['  async loadUser(id: string): Promise<User> {', 'loadUser'],
   ['MAX_RETRIES = 3', 'MAX_RETRIES'],
   ['defmodule Billing.Invoice do', 'Billing'],
+  // Bodiless declarations: interface / repository methods and prototypes
+  ['    List<OrderEntity> findByStoreAndStatus(String store, OrderStatusEnum status);', 'findByStoreAndStatus'],
+  ['        Map<String, Object> fingerprint(Map<String, Object> s);', 'fingerprint'],
+  ['    Optional<Pet> findByName(String name) throws IOException;', 'findByName'],
+  ['int add(int a, int b);', 'add'],
+  // Fields
+  ['    private final OrderRepository orderRepository;', 'orderRepository'],
+  ['    @Autowired private PetValidator validator;', 'validator'],
+  ['    protected static final Map<String, List<Pet>> cache = new HashMap<>();', 'cache'],
 ];
 
 for (const [line, id] of defs) {
@@ -43,12 +52,28 @@ const usages = [
   ['    invoice.total()', 'total'],
   ['    this.validator.validate(pet, errors);', 'validate'],
   ['        Pet pet = findByName(name);', 'findByName'],
+  ['        Pet pet = findByName(name);', 'pet'],
+  ['        orderRepository.save(order);', 'orderRepository'],
+  ['        return orderRepository.findByStoreAndStatus(STORE, OrderStatusEnum.OPEN);', 'findByStoreAndStatus'],
+  ['        List<OrderEntity> open = findByStoreAndStatus(store, status);', 'findByStoreAndStatus'],
   ['        Map<String, Object> fp = fingerprint(data, extra);', 'fingerprint'],
-  ['        Map<String, Object> fingerprint(Map<String, Object> s);', 'fingerprint'],
 ];
 for (const [line, id] of usages) {
   test(`not a definition: ${line}`, () => assert.strictEqual(R.definitionScore(line, id), 0));
 }
+
+test('an implementation outranks a bodiless declaration', () => {
+  assert.ok(R.definitionScore('    public List<Pet> findAll(String q) {', 'findAll') > R.definitionScore('    List<Pet> findAll(String q);', 'findAll'));
+});
+
+test('superTypes reads extends / implements / : lists, ignoring generics', () => {
+  assert.deepStrictEqual(R.superTypes('public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {'), ['JpaRepository']);
+  assert.deepStrictEqual(R.superTypes('public class PetValidator extends BaseValidator<Pet> implements Validator, Serializable {'), ['BaseValidator', 'Validator', 'Serializable']);
+  assert.deepStrictEqual(R.superTypes('public interface X\n    extends JpaRepository<A, B>,\n    JpaSpecificationExecutor<A> {'), ['JpaRepository', 'JpaSpecificationExecutor']);
+  assert.deepStrictEqual(R.superTypes('class Foo : Bar(), Baz<Int> {'), ['Bar', 'Baz']);
+  assert.deepStrictEqual(R.superTypes('struct Child : public Base {'), ['Base']);
+  assert.deepStrictEqual(R.superTypes('public class Plain {'), []);
+});
 
 test('parsePatch tracks new-side line numbers', () => {
   const p = '@@ -10,4 +10,5 @@ class A\n ctx\n-old\n+new1\n+new2\n ctx2\n@@ -40 +41 @@\n+tail';

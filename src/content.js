@@ -205,12 +205,38 @@
     let best = diffDefinition(types.length > 0);
     if (best) return best;
 
-    // 1b. Receiver's type file anywhere in the repo, e.g. petValidator.validate -> PetValidator.java.
+    // 1b. The receiver's type, then its parent types, e.g. petValidator.validate -> PetValidator.java, or
+    // BaseValidator.java when PetValidator extends it. If none of them declares the method (inherited from a
+    // library, like Spring Data's save), show the type's declaration instead of an unrelated method elsewhere.
     const tree = await repoTree(ctx).catch(() => []);
-    for (const type of types) {
-      for (const path of R.rankCandidatePaths(tree, type, { currentPath }).slice(0, 2)) {
-        const d = R.findDefinitionInText(await fileText(ctx, path).catch(() => null), word);
-        if (d) return { path, line: d.line };
+    const typeHome = async (type) => {
+      const inDiff = [...ctx.byPath.keys()].filter((p) => R.normalize(R.stem(p)) === R.normalize(type));
+      for (const path of [...inDiff, ...R.rankCandidatePaths(tree, type, { currentPath }).slice(0, 2)]) {
+        const text = await fileText(ctx, path).catch(() => null);
+        const decl = R.findDefinitionInText(text, type);
+        if (decl && decl.score >= 100) return { path, text, line: decl.line };
+      }
+      return null;
+    };
+    if (receiver) {
+      const queue = R.receiverTypes(curText, receiver).filter((t) => /^[A-Z]/.test(t)).map((t) => [t, 0]);
+      const seen = new Set();
+      let declared = null;
+      while (queue.length) {
+        const [type, depth] = queue.shift();
+        if (seen.has(type)) continue;
+        seen.add(type);
+        const home = await typeHome(type);
+        if (!home) continue;
+        const d = R.findDefinitionInText(home.text, word);
+        if (d) return { path: home.path, line: d.line };
+        const parents = R.superTypes(home.text.split('\n').slice(home.line - 1, home.line + 3).join('\n'));
+        if (!declared) declared = { home, type, parents };
+        if (depth < 2) for (const t of parents) queue.push([t, depth + 1]);
+      }
+      if (declared) {
+        const from = declared.parents.length ? ` (inherited from ${declared.parents.join(', ')})` : '';
+        return { path: declared.home.path, line: declared.home.line, note: `${word} isn't declared in ${declared.type}${from}` };
       }
     }
     if (types.length && (best = diffDefinition(false))) return best;
@@ -297,7 +323,7 @@
         history.pushState(null, '', `#diff-${file.hash}R${target.line}`);
         el.scrollIntoView({ block: 'center' });
         flash(el);
-        toast(`${name}:${target.line}`, 1500);
+        toast(target.note || `${name}:${target.line}`, target.note ? 4000 : 1500);
         return;
       }
       // The line is in this PR, so stay on the page: we already scrolled to its file.
@@ -307,7 +333,7 @@
     }
     const url = `https://github.com/${pr.owner}/${pr.repo}/blob/${ctx.headSha}/${encodePath(target.path)}#L${target.line}`;
     chrome.runtime.sendMessage({ type: 'openTab', url });
-    toast(`Opened ${name}:${target.line} in a new tab`, 2000);
+    toast(target.note || `Opened ${name}:${target.line} in a new tab`, target.note ? 4000 : 2000);
   }
 
   let busy = false;
