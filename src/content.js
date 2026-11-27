@@ -314,19 +314,105 @@
     [...document.querySelectorAll('[data-tagsearch-path], [data-path], [data-file-path]')]
       .find((n) => [n.dataset.tagsearchPath, n.dataset.path, n.dataset.filePath].includes(file.path)) || null;
 
-  async function go(pr, ctx, target) {
+  // ---------- Back / Forward ----------
+  // GitHub sets history.scrollRestoration = 'manual' and handles Back itself, which only scrolls to the file.
+  // So each jump records where the reader was (the clicked line and where it sat on screen) against the current
+  // history entry, and puts it back when Back or Forward returns to that entry. Positions live here, keyed by the
+  // Navigation API's entry key, not in history.state.
+  const marks = new Map();
+  const entryKey = () => (typeof navigation !== 'undefined' ? navigation.currentEntry?.key : null);
+  function scrollerOf(el) {
+    for (let a = el?.parentElement; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {
+      if (/(auto|scroll|overlay)/.test(getComputedStyle(a).overflowY) && a.scrollHeight > a.clientHeight) return a;
+    }
+    return document.scrollingElement || document.documentElement;
+  }
+  // Keep `el` at `want` px from the top of the viewport for a moment: GitHub keeps rendering files above it after a
+  // jump (pushing it down) and scrolls to the file on Back. Stops as soon as the reader scrolls or types.
+  let unpin = () => {};
+  function pin(el, scroller, want, ms = 1500) {
+    unpin(); // one pinned line at a time, e.g. Back pressed twice quickly
+    if (!el.getBoundingClientRect) return;
+    let stop = false;
+    const cancel = () => { stop = true; };
+    unpin = cancel;
+    const inputs = ['wheel', 'touchstart', 'keydown', 'mousedown'];
+    for (const t of inputs) window.addEventListener(t, cancel, { passive: true, capture: true });
+    const end = Date.now() + ms;
+    (function tick() {
+      if (stop || Date.now() > end || el.isConnected === false) {
+        for (const t of inputs) window.removeEventListener(t, cancel, { capture: true });
+        return;
+      }
+      const d = el.getBoundingClientRect().top - want;
+      if (Math.abs(d) > 2) scroller.scrollTop += d;
+      setTimeout(tick, 50);
+    })();
+  }
+  function rememberPosition(el) {
+    const key = entryKey();
+    if (!key) return;
+    const scroller = scrollerOf(el);
+    marks.set(key, { scroller, top: scroller.scrollTop, el, offset: el.getBoundingClientRect?.().top });
+  }
+  window.addEventListener('popstate', () => {
+    unpin();
+    const m = marks.get(entryKey());
+    if (!m) return;
+    m.scroller.scrollTop = m.top;
+    if (m.offset != null && m.el.isConnected !== false) {
+      pin(m.el, m.scroller, m.offset);
+      flash(m.el); // show which line you came back to, like a jump does
+    }
+    else for (const ms of [150, 400, 800]) setTimeout(() => { m.scroller.scrollTop = m.top; }, ms);
+  });
+
+  // Resolves once `scroller` has not moved for two checks in a row (or after `ms`).
+  const scrollSettled = (scroller, ms = 800) => new Promise((resolve) => {
+    const end = Date.now() + ms;
+    let last = null, still = 0;
+    (function tick() {
+      still = scroller.scrollTop === last ? still + 1 : 0;
+      last = scroller.scrollTop;
+      if (still >= 2 || Date.now() > end) resolve(); else setTimeout(tick, 50);
+    })();
+  });
+
+  // `from` is the clicked element: its position is what Back returns to.
+  async function go(pr, ctx, target, from) {
     const file = ctx.byPath.get(target.path);
     const name = target.path.split('/').pop();
     if (file && file.newLines.has(target.line)) {
+      if (from) rememberPosition(from);
+      // GitHub's newer "changes" view (the one with a file tree) moves the tree's highlight when the URL points at a
+      // file: `#diff-<hash>`. It reads that URL again on Back, so first stamp the entry being left with the clicked
+      // file, then point a new entry at the target file. GitHub highlights it and scrolls to the file; then go on
+      // to the exact line. (Picking the file in the tree instead would rewrite the entry being left, and Back would
+      // then highlight the wrong file.)
+      const inTree = [...document.querySelectorAll('[role="treeitem"]')].some((n) => n.id === target.path);
+      let navigated = false;
+      if (inTree) {
+        const fromRef = from && fileOf(from);
+        const fromFile = fromRef && (fromRef.hash ? ctx.byHash.get(fromRef.hash) : ctx.byPath.get(fromRef.path));
+        if (fromFile) history.replaceState(history.state, '', `#diff-${fromFile.hash}`);
+        const scroller = scrollerOf(fileBox(file) || from);
+        const before = scroller.scrollTop;
+        location.hash = `diff-${file.hash}`;
+        navigated = true;
+        await waitFor(() => scroller.scrollTop !== before, 400); // GitHub's own scroll to the file
+        await scrollSettled(scroller);
+      }
       let el = findLine(file, target.line);
       if (!el) {
         // File may be collapsed or not rendered yet; let GitHub load it via its own anchor handling.
-        location.hash = `diff-${file.hash}`;
+        if (!navigated) location.hash = `diff-${file.hash}`;
         el = await waitFor(() => findLine(file, target.line), 4000);
       }
       if (el) {
-        history.pushState(null, '', `#diff-${file.hash}R${target.line}`);
+        if (!navigated) history.pushState(null, '', `#diff-${file.hash}R${target.line}`);
         el.scrollIntoView({ block: 'center' });
+        rememberPosition(el); // so Forward comes back here
+        pin(el, scrollerOf(el), el.getBoundingClientRect?.().top);
         flash(el);
         toast(target.note || `${name}:${target.line}`, target.note ? 4000 : 1500);
         return;
@@ -357,7 +443,7 @@
       const ctx = await loadPr(pr);
       const target = await resolve(pr, hit.word, fileOf(hit.node.parentElement), hit.receiver, { call: hit.call });
       if (target) {
-        await go(pr, ctx, target);
+        await go(pr, ctx, target, hit.node.parentElement);
       } else {
         const url = `https://github.com/search?type=code&q=${encodeURIComponent(`repo:${pr.owner}/${pr.repo} symbol:${hit.word}`)}`;
         chrome.runtime.sendMessage({ type: 'openTab', url });

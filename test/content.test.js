@@ -38,7 +38,7 @@ async function clickWithFailure(failure) {
       createRange: () => { let end = 0; return { setStart() {}, setEnd(_n, o) { end = o; }, toString: () => line.slice(0, end), getClientRects: () => [{ left: 0, right: 100, top: 0, bottom: 20 }] }; },
       getElementById: () => null,
     },
-    window: { addEventListener() {} },
+    window: { addEventListener() {}, removeEventListener() {} },
   };
   ctx.self = ctx;
   vm.createContext(ctx);

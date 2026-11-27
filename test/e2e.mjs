@@ -43,7 +43,8 @@ async function runCase([pr, file, srcLine, word, wantPath, wantLine, wantMode, n
     console, setTimeout, clearTimeout, URL, TextEncoder, Promise, Map, Set, crypto: globalThis.crypto,
     navigator: { platform: 'MacIntel' },
     location: { pathname: `/${pr}/files`, set hash(_) {} },
-    history: { pushState: (_s, _t, url) => { result.scrolledTo = url; } },
+    history: { state: null, pushState: (_s, _t, url) => { result.scrolledTo = url; }, replaceState() {} },
+    getComputedStyle: () => ({ overflowY: 'visible' }),
     Node: { TEXT_NODE: 3 },
     CSS: {},
     chrome: { runtime: { sendMessage: async (m) => (m.type === 'openTab' ? void result.opened.push(m.url) : api(m.path, m.raw)) } },
@@ -54,8 +55,10 @@ async function runCase([pr, file, srcLine, word, wantPath, wantLine, wantMode, n
       caretPositionFromPoint: () => ({ offsetNode: textNode, offset: at + 1 }),
       createRange: () => { let end = 0; return { setStart() {}, setEnd(_n, o) { end = o; }, toString: () => srcLine.slice(0, end), getClientRects: () => [{ left: 0, right: 100, top: 0, bottom: 20 }] }; },
       getElementById: (id) => fakeEl(id),
+      scrollingElement: { scrollTop: 0 },
+      querySelectorAll: () => [],
     },
-    window: { addEventListener() {} },
+    window: { addEventListener() {}, removeEventListener() {} },
   };
   ctx.self = ctx;
   vm.createContext(ctx);
