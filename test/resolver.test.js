@@ -62,6 +62,16 @@ for (const [line, id] of usages) {
   test(`not a definition: ${line}`, () => assert.strictEqual(R.definitionScore(line, id), 0));
 }
 
+test('for a call, variables and fields holding a value are not definitions', () => {
+  const call = { call: true };
+  assert.strictEqual(R.definitionScore('        var conversation = conversation(tenant, handle);', 'conversation', call), 0);
+  assert.strictEqual(R.definitionScore('    private final Clock clock;', 'clock', call), 0);
+  assert.ok(R.definitionScore('        var conversation = conversation(tenant, handle);', 'conversation') > 0);
+  assert.ok(R.definitionScore('    static String conversation(String tenant, String handle) {', 'conversation', call) > 0);
+  assert.ok(R.definitionScore('const onSave = async (e) => {', 'onSave', call) > 0);
+  assert.ok(R.definitionScore('let add = |a, b| a + b;', 'add', call) > 0);
+});
+
 test('an implementation outranks a bodiless declaration', () => {
   assert.ok(R.definitionScore('    public List<Pet> findAll(String q) {', 'findAll') > R.definitionScore('    List<Pet> findAll(String q);', 'findAll'));
 });

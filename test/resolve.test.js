@@ -45,6 +45,18 @@ const FILES = {
     '    }',
     '}',
   ],
+  'src/queue/Worker.java': [
+    'public class Worker {',
+    '    static String key(String tenant, String handle) {',
+    '        return tenant + ":" + handle;',
+    '    }',
+    '',
+    '    public void submit(String handle, Message message) {',
+    '        var key = key(Tenants.current(), handle);',
+    '        queue.enqueue(key, message);',
+    '    }',
+    '}',
+  ],
   'src/pets/PetController.java': [
     'public class PetController {',
     '    private final PetValidator petValidator;',
@@ -83,15 +95,18 @@ function apiFor(p) {
   return { ok: false, status: 404, hasToken: true };
 }
 
-// Cmd+click `word` on `line` (1-based) of `file`. Returns where the page scrolled, the tabs opened and the last toast.
-async function click(file, line, word) {
+// Cmd+click the `nth` (0-based) occurrence of `word` on `line` (1-based) of `file`. Returns where the page scrolled, the tabs opened and the last toast.
+async function click(file, line, word, nth = 0) {
   const text = FILES[file][line - 1];
+  // Like GitHub's highlighted diff, the clicked word is a text node of its own inside the line cell.
+  const at0 = [...text.matchAll(new RegExp(`\\b${word}\\b`, 'g'))][nth].index;
   const scrolled = [];
   const tabs = [];
   const toasts = [];
   const listeners = {};
-  const cell = { id: `diff-${hash(file)}R${line}`, dataset: {}, getAttribute: () => null, closest: () => true, parentElement: null, tagName: 'TD' };
-  const node = { nodeType: 3, textContent: text, parentElement: cell };
+  const cell = { id: `diff-${hash(file)}R${line}`, dataset: {}, getAttribute: () => null, closest: () => cell, parentElement: null, tagName: 'TD', childNodes: [1, 2, 3] };
+  const node = { nodeType: 3, textContent: word, parentElement: cell };
+  const pos = (n, o) => (n === cell ? (o === 0 ? 0 : text.length) : at0 + o); // offset within the line
   const el = (tag) => {
     const n = { tag, children: [], classList: { add() {}, remove() {}, toggle() {} }, appendChild: (c) => n.children.push(c) };
     let t = '';
@@ -119,10 +134,13 @@ async function click(file, line, word) {
       documentElement: { appendChild() {}, classList: { add() {}, remove() {} } },
       body: {},
       createElement: el,
-      caretPositionFromPoint: () => ({ offsetNode: node, offset: text.indexOf(`${word}`) + 1 }),
+      caretPositionFromPoint: () => ({ offsetNode: node, offset: 1 }),
       createRange: () => {
-        let end = 0;
-        return { setStart() {}, setEnd(_n, o) { end = o; }, toString: () => text.slice(0, end), getClientRects: () => [{ left: 0, right: 100, top: 0, bottom: 20 }] };
+        let start = 0, end = 0;
+        return {
+          setStart(n, o) { start = pos(n, o); }, setEnd(n, o) { end = pos(n, o); },
+          toString: () => text.slice(start, end), getClientRects: () => [{ left: 0, right: 100, top: 0, bottom: 20 }],
+        };
       },
       getElementById: (id) => (/^diff-[0-9a-f]{64}R\d+$/.test(id) ? row(id) : null),
       querySelectorAll: () => [],
@@ -162,4 +180,11 @@ test('an inherited method goes to the receiver type, not a same-named method els
 test('a method defined in a parent type goes to the parent', async () => {
   const r = await click('src/pets/PetController.java', 4, 'validate');
   assert.deepStrictEqual(r.at, ['src/pets/BaseValidator.java:2']);
+});
+
+test('a call goes to the method, not a local variable of the same name', async () => {
+  const call = await click('src/queue/Worker.java', 7, 'key', 1); // var key = key(...)
+  assert.deepStrictEqual(call.at, ['src/queue/Worker.java:2']);
+  const variable = await click('src/queue/Worker.java', 8, 'key'); // queue.enqueue(key, ...)
+  assert.deepStrictEqual(variable.at, ['src/queue/Worker.java:7']);
 });

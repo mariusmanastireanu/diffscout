@@ -35,7 +35,7 @@ async function runCase([pr, file, srcLine, word, wantPath, wantLine, wantMode, n
   if (needsToken && !TOKEN) return { skip: true };
   const result = { opened: [], scrolledTo: null, toasts: [] };
   const listeners = {};
-  const parentEl = { id: '', dataset: { tagsearchPath: file }, getAttribute: () => null, closest: () => true, parentElement: null, tagName: 'TD' };
+  const parentEl = { id: '', dataset: { tagsearchPath: file }, getAttribute: () => null, closest: () => parentEl, parentElement: null, tagName: 'TD', childNodes: [] };
   const textNode = { nodeType: 3, textContent: srcLine, parentElement: parentEl };
   const at = srcLine.search(new RegExp(`\\b${word}\\b`));
   const fakeEl = (id) => ({ id, scrollIntoView() {}, closest() { return this; }, classList: { add() {}, remove() {} }, offsetWidth: 0 });

@@ -14,7 +14,7 @@ async function clickWithFailure(failure) {
   const toasts = [];
   const listeners = {};
   const line = '    Invoice invoice = new Invoice();';
-  const cell = { id: '', dataset: {}, getAttribute: () => null, closest: () => true, parentElement: null, tagName: 'TD' };
+  const cell = { id: '', dataset: {}, getAttribute: () => null, closest: () => cell, parentElement: null, tagName: 'TD', childNodes: [] };
   const text = { nodeType: 3, textContent: line, parentElement: cell };
   const el = (tag) => {
     const node = { tag, children: [], classList: { add() {}, remove() {}, toggle() {} }, appendChild: (c) => node.children.push(c) };

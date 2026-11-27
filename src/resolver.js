@@ -17,7 +17,9 @@
     { score: 90, re: (x) => new RegExp(`\\bfunc\\s*\\([^)]*\\)\\s*${x}\\s*\\(`) }, // Go method
     { score: 85, re: (x) => new RegExp(`\\bmacro_rules!\\s*${x}\\b`) },
     // Bindings: JS/TS const components, Kotlin/Scala val, Rust let/const/static
-    { score: 70, re: (x) => new RegExp(`\\b(const|let|var|val|static)\\s+(mut\\s+)?${x}\\s*[:=]`) },
+    // A binding is only a call's target when it holds a function, e.g. `const onSave = (e) => ...`.
+    { score: 70, re: (x) => new RegExp(`\\b(const|let|var|val|static)\\s+(mut\\s+)?${x}\\s*(:[^=]+)?=\\s*(async\\b|function\\b|\\(|[\\w$]+\\s*=>|React\\.|styled|memo\\b|forwardRef\\b|useCallback\\b|\\|)`) },
+    { score: 70, value: true, re: (x) => new RegExp(`\\b(const|let|var|val|static)\\s+(mut\\s+)?${x}\\s*[:=]`) },
     { score: 65, re: (x) => new RegExp(`^\\s*(export\\s+)?(default\\s+)?${x}\\s*=\\s*(\\(|async\\b|function\\b|class\\b|React\\.|styled)`) },
     // Methods in C-family languages: `<modifiers> <ReturnType> name(` on a line that does not end in `;`.
     // The return type may be generic with spaces, e.g. `Map<String, Object>`.
@@ -27,30 +29,32 @@
     { score: 40, re: (x) => new RegExp(`${C_METHOD(x)}[^=]*\\)\\s*(throws\\s+[\\w.,\\s]+)?;\\s*$`) },
     // Fields: `private final OrderRepository orderRepository;`, `protected static int count = 0;`.
     // At least one modifier is required, so local statements like `Pet pet = find(x);` don't count.
-    { score: 35, re: (x) => new RegExp(`^\\s*(@\\w+(\\([^)]*\\))?\\s+)*((public|private|protected|internal|static|final|readonly|volatile|transient|lateinit)\\s+)+[\\w.$]+(\\s*<[^;=()]*>)?(\\s*\\[\\])*\\??\\s+${x}\\s*(=|;)`) },
+    { score: 35, value: true, re: (x) => new RegExp(`^\\s*(@\\w+(\\([^)]*\\))?\\s+)*((public|private|protected|internal|static|final|readonly|volatile|transient|lateinit)\\s+)+[\\w.$]+(\\s*<[^;=()]*>)?(\\s*\\[\\])*\\??\\s+${x}\\s*(=|;)`) },
     // JS/TS class or object methods: `name(args) {`
     { score: 50, re: (x) => new RegExp(`^\\s*((async|static|get|set|public|private|protected|override)\\s+)*${x}\\s*\\([^)]*\\)\\s*(:\\s*[^{]+)?\\{`) },
     { score: 45, re: (x) => new RegExp(`^\\s*${x}\\s*:\\s*(async\\s+)?(function\\b|\\()`) },
     // Module-level assignment (Python constants etc.)
-    { score: 30, re: (x) => new RegExp(`^${x}\\s*(:[^=]+)?=[^=]`) },
+    { score: 30, value: true, re: (x) => new RegExp(`^${x}\\s*(:[^=]+)?=[^=]`) },
   ];
 
   const NOT_DEFINITION = /^\s*(return|new|throw|else|await|yield|import|from|package|using|#include|\/\/|\*|\/\*|#(?!\[))/;
 
-  function definitionScore(line, ident) {
+  // `opts.call`: the clicked word is called, e.g. `conversation(a, b)`, so variables and fields that merely hold a
+  // value (`var conversation = conversation(a, b);`) are not its definition.
+  function definitionScore(line, ident, opts = {}) {
     if (NOT_DEFINITION.test(line)) return 0;
     const x = esc(ident);
     let best = 0;
-    for (const p of DEFINITION_PATTERNS) if (p.score > best && p.re(x).test(line)) best = p.score;
+    for (const p of DEFINITION_PATTERNS) if (p.score > best && !(opts.call && p.value) && p.re(x).test(line)) best = p.score;
     return best;
   }
 
   // Best definition line in a full file text. Returns { line (1-based), score } or null.
-  function findDefinitionInText(text, ident) {
+  function findDefinitionInText(text, ident, opts) {
     if (!text || !text.includes(ident)) return null;
     let best = null;
     text.split('\n').forEach((l, i) => {
-      const s = definitionScore(l, ident);
+      const s = definitionScore(l, ident, opts);
       if (s && (!best || s > best.score)) best = { line: i + 1, score: s };
     });
     return best;

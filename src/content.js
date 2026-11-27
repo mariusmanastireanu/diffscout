@@ -106,7 +106,12 @@
     if (!hit) return null;
     const before = document.createRange();
     before.setStart(cell, 0); before.setEnd(node, s);
-    return { word, range, node, receiver: R.receiverOf(before.toString().split('\n').pop()) };
+    // Is it called, `name(` or `name<T>(`? GitHub puts highlighted tokens in their own spans, so the `(` is
+    // usually in a later text node: read the rest of the line cell, not just this node.
+    const after = document.createRange();
+    after.setStart(node, e); after.setEnd(cell, cell.childNodes.length);
+    const call = /^\s*(<[^<>()]*>\s*)?\(/.test(after.toString());
+    return { word, range, node, call, receiver: R.receiverOf(before.toString().split('\n').pop()) };
   }
 
   // Which PR file does this element belong to? GitHub tags files and line numbers with diff-<sha256(path)>.
@@ -177,7 +182,7 @@
 
   // ---------- Resolution ----------
 
-  async function resolve(pr, word, clicked, receiver) {
+  async function resolve(pr, word, clicked, receiver, opts = {}) {
     const ctx = await loadPr(pr);
     const cur = clicked && (clicked.hash ? ctx.byHash.get(clicked.hash) : ctx.byPath.get(clicked.path));
     const currentPath = cur?.path || clicked?.path;
@@ -193,7 +198,7 @@
       for (const f of ctx.byPath.values()) {
         if (onlyTypeFiles && !isTypeFile(f.path)) continue;
         for (const l of f.lines) {
-          let s = R.definitionScore(l.text, word);
+          let s = R.definitionScore(l.text, word, opts);
           if (!s) continue;
           if (f.path === currentPath && !receiver) s += 5;
           if (R.normalize(R.stem(f.path)) === R.normalize(word)) s += 10;
@@ -228,7 +233,7 @@
         seen.add(type);
         const home = await typeHome(type);
         if (!home) continue;
-        const d = R.findDefinitionInText(home.text, word);
+        const d = R.findDefinitionInText(home.text, word, opts);
         if (d) return { path: home.path, line: d.line };
         const parents = R.superTypes(home.text.split('\n').slice(home.line - 1, home.line + 3).join('\n'));
         if (!declared) declared = { home, type, parents };
@@ -242,13 +247,13 @@
     if (types.length && (best = diffDefinition(false))) return best;
 
     // 2. Defined elsewhere in the clicked file (outside the visible hunks).
-    const own = R.findDefinitionInText(curText, word);
+    const own = R.findDefinitionInText(curText, word, opts);
     if (own) return { path: currentPath, line: own.line };
 
     // 2b. Follow the clicked file's import of the symbol, e.g. `from .app import Flask` -> src/flask/app.py.
     const hints = R.importHints(curText, word, currentPath);
     for (const path of R.pathsForHints(tree, hints).slice(0, 4)) {
-      const d = R.findDefinitionInText(await fileText(ctx, path).catch(() => null), word);
+      const d = R.findDefinitionInText(await fileText(ctx, path).catch(() => null), word, opts);
       if (d) return { path, line: d.line };
     }
 
@@ -257,7 +262,7 @@
     const texts = await Promise.all(prFiles.map((p) => fileText(ctx, p).catch(() => null)));
     best = null;
     texts.forEach((text, i) => {
-      const d = R.findDefinitionInText(text, word);
+      const d = R.findDefinitionInText(text, word, opts);
       if (d && (!best || d.score > best.score)) best = { path: prFiles[i], line: d.line, score: d.score };
     });
     if (best && best.score >= 50) return best;
@@ -269,7 +274,7 @@
       for (const path of paths) {
         tried.add(path);
         const text = await fileText(ctx, path).catch(() => null);
-        const d = R.findDefinitionInText(text, word);
+        const d = R.findDefinitionInText(text, word, opts);
         if (d && d.score >= 50) return { path, line: d.line };
         if (d && !fallback) fallback = { path, line: d.line };
       }
@@ -350,7 +355,7 @@
     toast(`Looking up ${hit.word}…`, 0);
     try {
       const ctx = await loadPr(pr);
-      const target = await resolve(pr, hit.word, fileOf(hit.node.parentElement), hit.receiver);
+      const target = await resolve(pr, hit.word, fileOf(hit.node.parentElement), hit.receiver, { call: hit.call });
       if (target) {
         await go(pr, ctx, target);
       } else {
